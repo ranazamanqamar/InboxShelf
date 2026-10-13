@@ -8,10 +8,14 @@ import {
   Sparkles,
   Bot,
   ArrowUpRight,
+  ArrowRight,
+  Lock,
+  Mail,
 } from "lucide-react";
-import { WorkflowStepPreview } from "./WorkflowStepPreview";
 import { FaqSection } from "./FaqSection";
 import { BrandLogo } from "./BrandLogo";
+import { IntegrationsStrip } from "./IntegrationsStrip";
+import { FeatureScroll } from "./FeatureScroll";
 
 const LIFECYCLE = [
   {
@@ -43,7 +47,7 @@ const LIFECYCLE = [
 const OWNER_BENEFITS = [
   "One inbox: WhatsApp, Instagram, Messenger, website",
   "AI from your FAQs/PDFs only — no invented stock or prices",
-  "Orders → Google Sheets (deduped, with location)",
+  "Shopify + chat orders → Google Sheets (deduped, with location)",
   "Important Gmail/Outlook + private ops Assistant",
   "Stuck chat → alert + human takeover for that thread",
 ] as const;
@@ -54,6 +58,24 @@ const CUSTOMER_BENEFITS = [
   "Site order link when ready to buy",
   "WhatsApp confirm on their number",
   "Delivery updates + in-chat rating 1–5",
+] as const;
+
+const HERO_CHATS = [
+  { channel: "WA", name: "Ayesha", message: "Is the linen shirt in size M?", aiReplied: true },
+  { channel: "IG", name: "Omar", message: "Can you deliver to Lahore by Friday?", aiReplied: false },
+  { channel: "Web", name: "Sara", message: "Placed my order — thanks!", aiReplied: false },
+] as const;
+
+const ASSISTANT_PROMPTS = [
+  "List my important emails today",
+  "Which orders are on the way?",
+  "Show stuck chats",
+] as const;
+
+const ASSISTANT_EMAILS = [
+  { subject: "Supplier invoice #4821 — due Friday", box: "Gmail" },
+  { subject: "Refund request — order #1043", box: "Outlook" },
+  { subject: "Courier pickup moved to 3 pm", box: "Gmail" },
 ] as const;
 
 function Reveal({
@@ -80,7 +102,6 @@ function usePrefersReducedMotion() {
 
 export function LandingPage() {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [activeStep, setActiveStep] = useState(0);
   const reducedMotion = usePrefersReducedMotion();
 
   useEffect(() => {
@@ -99,16 +120,8 @@ export function LandingPage() {
     return () => io.disconnect();
   }, []);
 
-  useEffect(() => {
-    if (reducedMotion) return;
-    const id = window.setInterval(() => {
-      setActiveStep((s) => (s + 1) % LIFECYCLE.length);
-    }, 3200);
-    return () => window.clearInterval(id);
-  }, [reducedMotion]);
-
   return (
-    <div className="min-h-screen overflow-x-hidden bg-black text-zinc-100">
+    <div className="min-h-screen overflow-x-clip bg-black text-zinc-100">
       {/* Fixed nav — stays on top for the whole page scroll */}
       <div className="fixed inset-x-0 top-0 z-50 bg-black">
         <nav className="mx-auto flex w-full max-w-6xl items-center justify-between px-5 py-5 sm:px-8">
@@ -130,16 +143,10 @@ export function LandingPage() {
           </div>
 
           <div className="hidden items-center gap-3 md:flex">
-            <a
-              href="/login"
-              className="rounded-lg border border-white/15 px-3.5 py-2 text-[13px] font-medium text-zinc-300 transition-colors hover:border-white/30 hover:text-white"
-            >
+            <a href="/login" className="btn-secondary px-3.5 py-2 text-[14px]">
               Log in
             </a>
-            <a
-              href="/signup"
-              className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-black transition-colors hover:bg-brand-dim"
-            >
+            <a href="/signup" className="btn-primary px-3.5 py-2 text-[14px]">
               Start free trial
             </a>
           </div>
@@ -185,16 +192,10 @@ export function LandingPage() {
               Pricing
             </a>
             <div className="flex flex-col gap-2 border-t border-white/10 pt-3">
-              <a
-                href="/login"
-                className="py-2 text-center text-sm text-zinc-300"
-              >
+              <a href="/login" className="btn-secondary py-2.5 text-sm">
                 Log in
               </a>
-              <a
-                href="/signup"
-                className="rounded-lg bg-brand py-2.5 text-center text-sm font-semibold text-black"
-              >
+              <a href="/signup" className="btn-primary py-2.5 text-sm">
                 Start free trial
               </a>
             </div>
@@ -205,8 +206,8 @@ export function LandingPage() {
       {/* Tall track pins the black hero while the white sheet climbs over it */}
       <div className="hero-track">
         <header className="hero-sticky flex flex-col bg-black pt-20 sm:pt-24">
-          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 pb-32 pt-8 text-center sm:px-8 sm:pb-40">
-            <h1 className="max-w-4xl text-[2.05rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl md:text-6xl lg:text-[4.25rem]">
+          <div className="relative z-10 flex flex-1 flex-col items-center justify-center px-5 pb-16 pt-8 text-center sm:px-8 sm:pb-20">
+            <h1 className="max-w-5xl text-[2.05rem] font-semibold leading-[1.12] tracking-tight sm:text-5xl md:text-6xl lg:text-[4.25rem]">
               <span className="seq-lead">Every customer chat</span>
               <br className="hidden sm:block" />{" "}
               <span className="inline-flex flex-wrap items-center justify-center gap-x-2.5 gap-y-1 sm:gap-x-3">
@@ -218,35 +219,84 @@ export function LandingPage() {
                   strokeWidth={2.25}
                   aria-hidden
                 />
-                <span className="seq-shelf">shelf</span>
-                <span className="seq-plus">+</span>
-                <Sparkles
-                  className="seq-icon-2 inline size-7 sm:size-9 md:size-11"
-                  strokeWidth={2.25}
-                  aria-hidden
-                />
-                <span className="seq-ai">AI</span>
+                <span className="inline-flex items-center gap-x-2.5 whitespace-nowrap sm:gap-x-3">
+                  <span className="seq-shelf">shelf</span>
+                  <span className="seq-plus">+</span>
+                  <Sparkles
+                    className="seq-icon-2 inline size-7 sm:size-9 md:size-11"
+                    strokeWidth={2.25}
+                    aria-hidden
+                  />
+                  <span className="seq-ai">AI</span>
+                </span>
               </span>
             </h1>
 
             <p className="hero-rise hero-rise-delay-1 mx-auto mt-6 max-w-xl text-base leading-relaxed text-zinc-500 sm:text-lg">
-              WhatsApp, Instagram, Messenger, and your site — answered from your
+              WhatsApp, Instagram, Messenger, your site and Shopify — answered from your
               knowledge, confirmed on WhatsApp, logged to Google Sheets.
             </p>
 
-            <div className="hero-rise hero-rise-delay-2 relative mt-10">
-              <span className="cta-glow-ring" aria-hidden />
-              <a
-                href="/signup"
-                className="relative inline-flex items-center justify-center rounded-xl bg-brand px-7 py-3.5 text-sm font-semibold text-black transition-colors hover:bg-brand-dim"
-              >
+            <div className="hero-rise hero-rise-delay-2 mt-10">
+              <a href="/signup" className="btn-primary cta-arrow px-7 py-3.5 text-[15px]">
                 Start free trial
+                <ArrowRight size={16} aria-hidden />
               </a>
             </div>
 
             <p className="hero-rise hero-rise-delay-3 mt-4 text-xs text-zinc-600">
-              14-day free Starter trial · then Pro $10/mo
+              14-day free Starter trial · no card needed · then Pro $10/mo
             </p>
+
+            <div className="hero-rise hero-rise-delay-4 mt-2 w-full max-w-5xl">
+              <IntegrationsStrip tone="onDark" />
+            </div>
+
+            <div
+              className="hero-rise hero-rise-delay-5 mt-8 w-full max-w-[420px] text-left [@media(max-height:760px)]:hidden"
+              aria-hidden
+            >
+              <div className="is-glass is-glass-tight">
+                <div className="flex items-center justify-between border-b border-white/10 px-4 py-2.5 text-[11px]">
+                  <span className="flex items-center gap-1.5 text-zinc-400">
+                    <Bot size={12} className="text-brand" />
+                    Inbox · AI on
+                  </span>
+                  <span className="flex items-center gap-1.5 text-zinc-500">
+                    <span className="size-1.5 rounded-full bg-brand" />
+                    {HERO_CHATS.length} chats
+                  </span>
+                </div>
+                <div className="px-4 pt-3">
+                  <div className="shelf-plank" aria-hidden />
+                </div>
+                <ul className="divide-y divide-white/5 pt-1">
+                  {HERO_CHATS.map((chat, i) => (
+                    <li
+                      key={chat.name}
+                      className={`shelf-slot shelf-slot-${i} flex items-center gap-3 px-4 py-2.5`}
+                    >
+                      <span className="w-9 shrink-0 rounded bg-white/5 py-0.5 text-center text-[10px] font-semibold text-zinc-300">
+                        {chat.channel}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[12px] font-semibold text-white">
+                          {chat.name}
+                        </span>
+                        <span className="block truncate text-[11px] text-zinc-500">
+                          {chat.message}
+                        </span>
+                      </span>
+                      {chat.aiReplied ? (
+                        <span className="shrink-0 rounded bg-brand/15 px-1.5 py-0.5 text-[10px] font-semibold text-brand">
+                          AI replied
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
           </div>
         </header>
       </div>
@@ -255,7 +305,7 @@ export function LandingPage() {
       <main className="sheet-panel relative z-20 -mt-[92svh] rounded-t-[3rem] bg-white text-zinc-900 sm:rounded-t-[4.5rem]">
         <section
           id="features"
-          className="mx-auto max-w-6xl scroll-mt-28 px-5 pb-16 pt-16 sm:px-8 sm:pb-24 sm:pt-24"
+          className="section-y mx-auto max-w-6xl scroll-mt-28 px-5 sm:px-8"
         >
           <Reveal className="mx-auto max-w-2xl text-center">
             <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-5xl">
@@ -269,7 +319,7 @@ export function LandingPage() {
           </Reveal>
 
           <div className="mt-12 grid items-stretch gap-5 lg:grid-cols-2">
-            <Reveal className="flex h-full min-h-[420px] overflow-hidden rounded-2xl bg-zinc-950 p-6 text-left text-zinc-100 sm:min-h-[440px] sm:p-8">
+            <Reveal className="is-glass flex h-full min-h-[420px] p-6 text-left text-zinc-100 sm:min-h-[440px] sm:p-8">
               <div className="flex h-full w-full flex-col gap-8 sm:flex-row sm:items-stretch">
                 <div className="flex min-w-0 flex-1 flex-col">
                   <h3 className="text-xl font-semibold text-white">
@@ -289,7 +339,7 @@ export function LandingPage() {
                   </ul>
                   <a
                     href="/signup"
-                    className="mt-auto inline-flex w-fit items-center justify-center rounded-lg bg-brand px-4 py-2.5 text-sm font-semibold text-black transition-colors hover:bg-brand-dim"
+                    className="btn-primary mt-auto w-fit px-5 py-2.5 text-sm"
                   >
                     Start free trial
                   </a>
@@ -317,7 +367,7 @@ export function LandingPage() {
               </div>
             </Reveal>
 
-            <Reveal className="flex h-full min-h-[420px] overflow-hidden rounded-2xl bg-zinc-950 p-6 text-left text-zinc-100 sm:min-h-[440px] sm:p-8">
+            <Reveal className="is-glass flex h-full min-h-[420px] p-6 text-left text-zinc-100 sm:min-h-[440px] sm:p-8">
               <div className="flex h-full w-full flex-col gap-8 sm:flex-row sm:items-stretch">
                 <div className="flex min-w-0 flex-1 flex-col">
                   <h3 className="text-xl font-semibold text-white">
@@ -337,7 +387,7 @@ export function LandingPage() {
                   </ul>
                   <a
                     href="#workflow"
-                    className="mt-auto inline-flex w-fit items-center justify-center rounded-lg border border-white/20 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:border-white/40"
+                    className="btn-secondary mt-auto w-fit px-4 py-2.5 text-sm"
                   >
                     See how it works
                   </a>
@@ -367,9 +417,9 @@ export function LandingPage() {
 
         <section
           id="workflow"
-          className="scroll-mt-28 border-t border-zinc-100 bg-zinc-50"
+          className="scroll-mt-28 bg-gradient-to-b from-white from-0% via-zinc-50 via-24% to-zinc-50"
         >
-          <div className="mx-auto max-w-6xl px-5 py-16 sm:px-8 sm:py-24">
+          <div className="section-y mx-auto max-w-6xl px-5 sm:px-8">
             <Reveal className="mx-auto max-w-2xl text-center">
               <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 <span className="text-brand">How it works</span>
@@ -377,60 +427,17 @@ export function LandingPage() {
                 <span className="text-zinc-900">from chat to rating</span>
               </h2>
               <p className="mt-4 text-base text-zinc-600">
-                Tap a step — the window below shows exactly what InboxShelf does
-                on each channel.
+                Scroll to move through each step — the preview on the right
+                follows the feature on the left.
               </p>
             </Reveal>
 
-            <div className="mt-12 grid items-stretch gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {LIFECYCLE.map((step, i) => {
-                const active = i === activeStep;
-                const words = step.title.split(" ");
-                return (
-                  <button
-                    key={step.title}
-                    type="button"
-                    onClick={() => setActiveStep(i)}
-                    className={`flex h-full min-h-[148px] flex-col rounded-2xl border p-5 text-left transition-colors ${
-                      active
-                        ? "border-brand bg-white shadow-[0_0_0_1px_color-mix(in_srgb,var(--brand)_35%,transparent)]"
-                        : "border-zinc-200 bg-white/80 hover:border-zinc-300"
-                    }`}
-                  >
-                    <p className="text-[11px] font-semibold tracking-wide text-zinc-400">
-                      STEP {i + 1}
-                    </p>
-                    <p className="mt-2 text-base font-semibold sm:text-lg">
-                      {active ? (
-                        <>
-                          <span className="text-brand">{words[0]}</span>{" "}
-                          <span className="text-zinc-900">
-                            {words.slice(1).join(" ")}
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-zinc-800">{step.title}</span>
-                      )}
-                    </p>
-                    <p className="mt-2 flex-1 text-sm leading-relaxed text-zinc-500">
-                      {step.body}
-                    </p>
-                  </button>
-                );
-              })}
-            </div>
-
-            <Reveal>
-              <WorkflowStepPreview
-                activeStep={activeStep}
-                reducedMotion={reducedMotion}
-              />
-            </Reveal>
+            <FeatureScroll steps={LIFECYCLE} reducedMotion={reducedMotion} />
           </div>
 
           {/* Handover — clear You vs AI split so feature is obvious */}
-          <div className="mx-auto max-w-6xl px-5 pb-16 pt-12 sm:px-8 sm:pb-24 sm:pt-16">
-            <Reveal className="rounded-2xl border border-white/10 bg-zinc-950 p-7 text-zinc-100 sm:p-10">
+          <div className="mx-auto max-w-6xl px-5 pb-16 sm:px-8 sm:pb-24">
+            <Reveal className="is-glass p-7 text-zinc-100 sm:p-10">
               <p className="mx-auto max-w-2xl text-center text-sm text-zinc-500">
                 Feature: Handover — when AI is stuck, you take that chat;
                 everything else keeps moving.
@@ -520,15 +527,93 @@ export function LandingPage() {
               </div>
             </Reveal>
           </div>
+
+          <div
+            id="assistant"
+            className="mx-auto max-w-6xl scroll-mt-28 px-5 pb-16 sm:px-8 sm:pb-24"
+          >
+            <Reveal className="is-glass p-7 text-zinc-100 sm:p-10">
+              <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-12">
+                <div>
+                  <h3 className="text-3xl font-semibold tracking-tight sm:text-4xl md:text-[2.5rem] md:leading-tight">
+                    <span className="text-brand">Assistant</span>
+                    <br />
+                    <span className="text-white">your private ops chat</span>
+                  </h3>
+                  <p className="mt-4 max-w-md text-base leading-relaxed text-zinc-500">
+                    Ask the bot about your store — it answers in its own thread,
+                    never in customer chats.
+                  </p>
+                  <ul className="mt-6 flex flex-col gap-2.5">
+                    {ASSISTANT_PROMPTS.map((prompt) => (
+                      <li
+                        key={prompt}
+                        className="flex w-fit items-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3.5 py-2 text-sm text-zinc-200"
+                      >
+                        <Sparkles size={14} className="text-brand" aria-hidden />
+                        “{prompt}”
+                      </li>
+                    ))}
+                  </ul>
+                  <p className="mt-6 flex items-center gap-1.5 text-xs text-zinc-500">
+                    <Lock size={12} aria-hidden />
+                    Owner-only · never messages your customers
+                  </p>
+                </div>
+
+                <div
+                  className="overflow-hidden rounded-2xl border border-white/10 bg-[radial-gradient(ellipse_at_20%_10%,color-mix(in_srgb,var(--brand)_14%,transparent),#09090b_55%)]"
+                  aria-hidden
+                >
+                  <div className="flex items-center gap-2 border-b border-white/10 px-4 py-3 text-[11px] text-zinc-400">
+                    <Bot size={13} className="text-brand" />
+                    <span className="font-semibold text-white">Assistant</span>
+                    <span className="rounded bg-white/5 px-1.5 py-0.5 text-[10px] font-medium text-zinc-400">
+                      Private
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-3 p-4 sm:p-5">
+                    <div className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-zinc-800 px-3 py-2 text-[12px] text-zinc-100">
+                      List my important emails today
+                    </div>
+                    <div className="max-w-[95%] rounded-2xl rounded-tl-md border border-white/10 bg-zinc-900/90 px-3 py-2.5 text-[12px] text-zinc-200">
+                      <p className="mb-2 flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-brand">
+                        <Sparkles size={10} aria-hidden />
+                        InboxShelf
+                      </p>
+                      <p className="mb-2 text-zinc-300">3 important emails today:</p>
+                      <ul className="flex flex-col gap-1.5">
+                        {ASSISTANT_EMAILS.map((mail) => (
+                          <li
+                            key={mail.subject}
+                            className="flex items-start gap-2 rounded-lg border border-white/10 bg-black/40 px-2.5 py-2"
+                          >
+                            <Mail size={12} className="mt-0.5 shrink-0 text-zinc-500" />
+                            <span className="min-w-0 flex-1">{mail.subject}</span>
+                            <span className="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[10px] text-zinc-400">
+                              {mail.box}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                  <p className="border-t border-white/10 px-4 py-3 text-center text-[11px] text-zinc-400 sm:text-xs">
+                    Answers stay in this thread — never in customer DMs.
+                  </p>
+                </div>
+              </div>
+            </Reveal>
+          </div>
         </section>
 
         <FaqSection />
 
         <section
           id="pricing"
-          className="scroll-mt-28 border-t border-zinc-100 bg-zinc-50 px-5 py-16 sm:px-8 sm:py-24 lg:px-[1in]"
+          className="section-y scroll-mt-28 bg-gradient-to-b from-zinc-50 to-zinc-50 px-5 sm:px-8 lg:px-[1in]"
         >
-          <Reveal className="mx-auto w-full max-w-6xl rounded-2xl border border-white/10 bg-zinc-950 p-7 text-zinc-100 sm:p-10">
+          <Reveal className="is-glass mx-auto w-full max-w-6xl p-7 text-zinc-100 sm:p-10">
             <div className="text-center">
               <h2 className="text-3xl font-semibold tracking-tight text-white sm:text-4xl">
                 Simple pricing
@@ -546,7 +631,7 @@ export function LandingPage() {
                     Free
                   </span>
                 </p>
-                <p className="mt-1 text-sm text-zinc-500">14-day trial</p>
+                <p className="mt-1 text-sm text-zinc-500">14-day trial · no card needed</p>
                 <ul className="mt-6 flex-1 space-y-2.5 text-sm text-zinc-300">
                   {[
                     "WhatsApp, Instagram, Messenger, website chat",
@@ -554,6 +639,7 @@ export function LandingPage() {
                     "Product Q&A → site order link",
                     "WhatsApp order confirm on the order phone",
                     "Orders logged to Google Sheets (with location)",
+                    "Shopify order sync to Sheets",
                     "Important Gmail / Outlook surfacing",
                     "Owner Assistant for ops questions",
                     "Stuck-chat handover alerts (pause that thread only)",
@@ -564,11 +650,9 @@ export function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="/signup"
-                  className="mt-8 flex w-full items-center justify-center rounded-lg bg-brand py-2.5 text-sm font-semibold text-black transition-colors hover:bg-brand-dim"
-                >
+                <a href="/signup" className="btn-primary cta-arrow mt-8 w-full py-3 text-sm">
                   Start free trial
+                  <ArrowRight size={16} aria-hidden />
                 </a>
               </div>
 
@@ -581,16 +665,18 @@ export function LandingPage() {
                   <span className="text-4xl font-semibold tracking-tight text-white">
                     $10
                   </span>
-                  <span className="text-sm text-zinc-500">/mo</span>
+                  <span className="text-sm text-zinc-500">/mo per store</span>
                 </p>
                 <p className="mt-1 text-sm text-zinc-500">After trial</p>
                 <ul className="mt-6 flex-1 space-y-2.5 text-sm text-zinc-300">
                   {[
-                    "Everything in Starter after trial",
-                    "Higher chat / AI limits",
-                    "Pro modules via feature flags",
-                    "Priority support lane",
-                    "Early access to new channels/modules as we ship",
+                    "Everything in Starter",
+                    "Higher chat and AI limits",
+                    "TikTok messaging (coming)",
+                    "Sales and reply-rate analytics",
+                    "White-label and custom domain",
+                    "Extra sheets and mailboxes",
+                    "Priority support",
                   ].map((f) => (
                     <li key={f} className="flex gap-2">
                       <span className="text-brand">+</span>
@@ -598,11 +684,9 @@ export function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="/signup"
-                  className="mt-8 flex w-full items-center justify-center rounded-lg bg-brand py-2.5 text-sm font-semibold text-black transition-colors hover:bg-brand-dim"
-                >
+                <a href="/signup" className="btn-primary cta-arrow mt-8 w-full py-3 text-sm">
                   Start free trial
+                  <ArrowRight size={16} aria-hidden />
                 </a>
               </div>
             </div>
@@ -627,7 +711,7 @@ export function LandingPage() {
               </a>
               <a
                 href="/signup"
-                className="inline-flex items-center gap-1 font-medium text-zinc-900 hover:text-brand-dim"
+                className="btn-link text-brand-ink hover:text-emerald-800"
               >
                 Sign up
                 <ArrowUpRight size={14} />

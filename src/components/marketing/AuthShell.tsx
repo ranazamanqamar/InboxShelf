@@ -21,17 +21,11 @@ export function AuthShell({ mode, children }: AuthShellProps) {
         <BrandLogo tone="onDark" size="md" />
 
         {isLogin ? (
-          <Link
-            href="/signup"
-            className="rounded-lg bg-brand px-3.5 py-2 text-[13px] font-semibold text-black transition-colors hover:bg-brand-dim"
-          >
+          <Link href="/signup" className="btn-primary px-3.5 py-2 text-[14px]">
             Start free trial
           </Link>
         ) : (
-          <Link
-            href="/login"
-            className="rounded-lg border border-white/15 px-3.5 py-2 text-[13px] font-medium text-zinc-300 transition-colors hover:border-white/30 hover:text-white"
-          >
+          <Link href="/login" className="btn-secondary px-3.5 py-2 text-[14px]">
             Log in
           </Link>
         )}

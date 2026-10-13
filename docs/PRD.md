@@ -23,12 +23,12 @@
 - Important Gmail + Outlook mail listed; owner can instruct actions (Email page + Assistant)
 - Stuck chat → notify owner (WhatsApp + Gmail + dashboard); pause only that chat; **owner can type a human reply**
 - Owner has a separate **Assistant** chat for ops questions (e.g. “list my important emails today”)
-- Marketing: grey fluid atmosphere + motion; dashboard: calm light UI; mock/demo mode first
+- Marketing: black background with white content sheet + motion; dashboard: calm light UI; mock/demo mode first
 
 **Non-goals (MVP)**
 - Play Store / App Store native apps
 - TikTok
-- Full Stripe packaging / team roles / white-label
+- Full Paddle packaging / team roles / white-label
 - Cold bulk WhatsApp marketing blasts (compliance: reply + approved templates only)
 - Assistant messaging end customers on the owner’s behalf (MVP is read/ops only)
 
@@ -42,18 +42,43 @@
 
 1. Open **inboxshelf.com** → **Home** (not login-first)
 2. See **Pricing (USD)** on home — Starter free 14-day trial / Pro $10
-3. **Sign up** → tenant created
-4. **Dashboard** → connect integrations + knowledge; use Inbox + Assistant
-5. Later visits → **Log in**
+3. **Sign up** (`/signup`) — **email + password** first, then **or**, then **Sign up with Google** → tenant created; **14-day free trial starts with no card**
+4. **Dashboard** → connect integrations + knowledge; use Inbox + Assistant (full features during trial)
+5. Later visits → **Log in** (`/login`) — email + password, or **Continue with Google**
+6. After 14 days → **all features blocked** until owner adds a card and upgrades to Pro ($10/mo)
+7. **Add another store** (optional) → same login, **new subscription** for that store, Pro $10/mo from day 1 (**no second free trial**); owner switches between stores in the dashboard
+
+Full visual: [inboxshelf-flow.png](inboxshelf-flow.png) · [inboxshelf-flow.svg](inboxshelf-flow.svg).
 
 ## 4.1 Pricing (USD)
 
 | Plan | Price | Notes |
 |------|--------|--------|
-| **Starter** | **Free** · 14-day trial | Full core product during trial (inbox, knowledge, Sheets, email, handover, Assistant) |
-| **Pro** | **$10**/mo | Paid plan after trial (Most Popular) — same app; higher limits / later modules via flags |
+| **Starter** | **Free** · 14-day trial | Full core product during trial (inbox, knowledge, Sheets, email, handover, Assistant). **No card at signup.** |
+| **Pro** | **$10**/mo **per store** | After trial: features stay **locked** until card + Pro payment. Same app; higher limits / later modules via flags |
+
+**One subscription per store**
+- Each store has its **own subscription**. An owner with two stores pays for two subscriptions.
+- **One free trial per owner** — only the first store gets the 14-day trial. Every extra store is Pro ($10/mo) from day 1.
+- The owner uses **one login** for all their stores and switches between them in the dashboard.
+
+**Trial / paywall rules**
+- Signup never asks for card credentials (first store).
+- Day 1–14: full core access.
+- Day 15+: that store’s dashboard features blocked; paywall prompts add card / upgrade to Pro $10/mo. A locked store never locks the owner’s other stores.
+- Charge only when the owner chooses Pro (not during the free trial).
 
 Marketing shows pricing only on the home `#pricing` panel (no separate pricing page).
+
+## 4.2 Auth methods
+
+| Method | Where | Label / UI order |
+|--------|--------|------------------|
+| Email + password | `/signup`, `/login` | **Primary** (shown first) |
+| Google | `/signup` only as signup | Below **or**: **Sign up with Google** |
+| Google | `/login` for returning users | Below **or**: **Continue with Google** (never “Sign up with Google” on login) |
+
+Firebase Authentication: Email/Password provider + Google provider.
 
 ## 5. MVP feature requirements
 
@@ -75,7 +100,7 @@ Marketing shows pricing only on the home `#pricing` panel (no separate pricing p
 ### 5.3 Orders + Google Sheets
 
 **Ingest + sheet**
-- Ingest from Shopify / site webhooks + structured chat orders
+- Ingest from **Shopify** store webhooks, **non-Shopify website** order webhooks, and structured chat orders (order `source`: `shopify` / `website` / `chat`)
 - Agent creates sheet columns if missing
 - Fields: order id, date, month, name, phone (WhatsApp), **location**, address, channel, items, qty, price, status (`pending_confirm` / `confirmed` / `to_deliver` / `on_the_way` / `delivered` / rated), rating (1–5), etc.
 - When the AI takes an order in chat, it **must ask for or extract delivery location** and save it on the order row (alongside full address when available)
@@ -85,14 +110,15 @@ Marketing shows pricing only on the home `#pricing` panel (no separate pricing p
 **Order messaging lifecycle (WhatsApp number on the order)**
 1. Customer asks about a product → agent sends accurate product info from knowledge
 2. Customer wants to order → agent sends **site order link**
-3. Customer orders on **site** or via **chat** → agent messages that customer’s **provided WhatsApp number**: summary + **“Do you confirm your order?”**
-4. Customer confirms (yes) → agent writes/updates the Sheets/DB row (incl. location); may send a short WhatsApp thank-you / confirmed note
+3. Customer orders on **site** or via **chat** → agent messages that customer’s **provided WhatsApp number** with order summary + **final confirmation**: **“Do you confirm your order?”** (**before** any Sheets write)
+4. Customer confirms (yes) → **only then** agent **adds/updates order details on Google Sheets** (+ DB, incl. location); may send a short WhatsApp thank-you / confirmed note
 5. Owner (in Sheets or dashboard Orders) marks the order ready for delivery — **tick / status → to deliver / on the way**
 6. That tick triggers agent WhatsApp to that customer: **order is on the way**, and asks them to **notify when they receive** the order
 7. Customer replies that they received it → agent asks for an **in-chat rating (1–5)** about the product, then may send an **optional site review link**
 
 **Acceptance**
 - Confirm and status updates go to the **WhatsApp number provided on the order**, not a random channel
+- **Google Sheets row is written only after** the customer’s final WhatsApp **yes** (not before)
 - Sheets delivery tick is what drives the “on the way” message (owner-controlled)
 - Rating is captured **in chat first**; site link is optional follow-up
 
@@ -144,12 +170,16 @@ Marketing shows pricing only on the home `#pricing` panel (no separate pricing p
 | TikTok messaging | New channel module |
 | Higher chat / AI limits | Plan quotas |
 | Advanced analytics | Reply rate, sales by channel |
-| Stripe billing + teams/roles | Monetization polish |
+| Paddle billing | Monetization polish |
 | White-label / custom domain | Agencies |
-| Multi-store / multi-sheet / extra mailboxes | Power users |
+| Extra sheets and mailboxes (per store) | Power users |
 | Priority support | Packaging |
 | Native mobile apps | Only if demand |
 | Assistant actions that message customers | Explicit opt-in later |
+
+**Multiple stores are not a Pro feature:** each store is its own subscription (see §4.1).
+
+**Dashboard access:** only the store owner can access a store’s dashboard — one owner per store, on Starter and Pro. No team members, staff accounts, or shared logins. An owner with more than one store gets a **store switcher** (same login). See [Backend Schema — Access Control](BACKEND_SCHEMA.md#3-access-control).
 
 ## 7. MVP → Pro process
 
@@ -164,33 +194,25 @@ Clients do not reinstall or buy a second website.
 
 ## 8. Design requirements
 
+Full brand rules (logo, colors, type, headings, CTAs): [Design Brief](DESIGN_BRIEF.md).
+
+**Brand**
+- One accent: InboxShelf green `#00E676` (hover `#00C853`); darker `#047857` for green text on light backgrounds
+- Logo: inbox message cards on a shelf; wordmark **Inbox** + green **Shelf**
+- Primary CTA: solid green, black text, no glow; secondary: ghost outline
+
 **Marketing (home, pricing, login, signup)**
-- Balanced black–white–**grey** fluid atmosphere (not flat white, not pure dark)
-- Soft drifting smoke/fluid blobs + film grain; honor `prefers-reduced-motion`
-- Monochrome grit — no purple SaaS clichés, no cream/terracotta defaults
+- Dark: black base with white content sheet, green accent; honor `prefers-reduced-motion`
+- No purple SaaS clichés, no cream/terracotta defaults
 - Hero: InboxShelf brand + one headline + one short line + CTA group + one calm product visual
 - No busy card grids, stats strips, or overlays on the hero
 
 **Dashboard**
-- Calm, light UI (not the marketing wash)
+- Calm, light UI (`#FAFAFA` + white panels) using the **same green** accent
 - Inbox-first; Assistant as its own clear section
 - Composer always present in thread detail; disabled state must still be readable
 
-## 9. Technical requirements
-
-| Layer | Choice |
-|-------|--------|
-| App | TypeScript, Next.js App Router |
-| DB | PostgreSQL + Prisma (wired after mock) |
-| Auth | Mock session first → NextAuth/Clerk later |
-| AI | OpenAI/Anthropic + RAG (mock replies first) |
-| Host | Vercel + managed Postgres |
-| Mode | **Mock/demo first**; real APIs behind env flags |
-| Path | `C:\Users\Administrator\Projects\inboxshelf` |
-| Platform secrets | `OPENAI_API_KEY` (and later Meta App secret) in server env only — never in shop UI |
-| Tenant connections | WhatsApp / IG / etc. per shop via Integrations (Meta Embedded Signup when live) |
-
-## 10. Success metrics (MVP)
+## 9. Success metrics (MVP)
 
 - Owner connects ≥1 channel and receives an AI reply in demo or live
 - Order row appears in Sheets without duplicate on dual-channel test
@@ -201,17 +223,21 @@ Clients do not reinstall or buy a second website.
 - Assistant returns “important emails today” into the Assistant thread
 - Landing + signup + dashboard usable on mobile browser
 
-## 11. Current build status
+## 10. Current build status
 
 **Done**
 - PRD (this doc, including order messaging lifecycle spec)
-- Marketing site (home, pricing, login, signup) — mock, grey atmosphere + motion
-- Pricing shown on home only: Starter **free 14-day trial** / Pro **$10**/mo (Most Popular)
-- Dashboard shell + mock inbox / orders / knowledge / integrations / email / alerts
-- Inbox reply composer (always visible; active on paused / human)
-- Assistant dashboard section (owner↔bot; mock intents + OpenAI when `OPENAI_API_KEY` set)
-- Integrations Connect UX (sellable mock; WhatsApp shows demo Business number)
+- Marketing site (home, pricing, login, signup) — black + motion; sections: Features, How it works, Handover, Assistant, FAQ, Pricing
+- Pricing shown on home only: Starter **free 14-day trial** (no card) / Pro **$10**/mo (Most Popular)
+- Login / signup UI with email + password and Google button (design only; Firebase Auth not wired yet)
 
 **Not done yet**
+- Real Firebase Auth (email/password + Google) and tenant creation
 - Real Meta / Shopify / Sheets / Gmail / Outlook OAuth
 - Live order messaging lifecycle (product link → WhatsApp confirm → Sheets tick → on-the-way → received → in-chat rating)
+
+**Dashboard — built later with the product**
+- Dashboard shell + inbox / orders / knowledge / integrations / email / alerts
+- Inbox reply composer (always visible; active on paused / human)
+- Assistant dashboard section (owner↔bot; OpenAI when `OPENAI_API_KEY` set)
+- Integrations Connect UX (WhatsApp shows demo Business number)

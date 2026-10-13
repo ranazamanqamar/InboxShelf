@@ -320,22 +320,20 @@ export function WorkflowStepPreview({
   const Scene = SCENE_COMPONENTS[index];
 
   return (
-    <div className="relative mx-auto mt-10 min-h-[360px] max-w-3xl">
-      <div className="absolute inset-0 overflow-hidden rounded-[1.75rem] bg-zinc-900">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_70%_40%,#1a3d2a_0%,#09090b_55%,#000_100%)]" />
-        <div className="absolute inset-0 opacity-40 [background-image:linear-gradient(rgba(255,255,255,0.04)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.04)_1px,transparent_1px)] [background-size:28px_28px]" />
-      </div>
-
-      <div
-        key={index}
-        className={`relative z-10 flex min-h-[360px] flex-col rounded-[1.75rem] border border-white/10 bg-zinc-950/40 p-5 backdrop-blur-sm sm:p-6 ${
-          reducedMotion ? "" : "workflow-scene-enter"
-        }`}
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <Scene />
-      </div>
+    <div
+      key={index}
+      className={`relative flex h-full min-h-[360px] flex-col overflow-hidden rounded-[1.75rem] border border-white/10 p-5 sm:p-6 ${
+        reducedMotion ? "" : "workflow-scene-enter"
+      }`}
+      style={{
+        backgroundColor: "#09090b",
+        backgroundImage:
+          "radial-gradient(ellipse at 70% 25%, #00e67629, #09090b 55%)",
+      }}
+      aria-live="polite"
+      aria-atomic="true"
+    >
+      <Scene />
     </div>
   );
 }

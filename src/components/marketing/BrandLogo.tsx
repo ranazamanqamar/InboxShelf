@@ -1,22 +1,37 @@
 import Link from "next/link";
 
+type Tone = "onDark" | "onLight";
+
 type BrandLogoProps = {
   href?: string;
-  tone?: "onDark" | "onLight";
+  tone?: Tone;
   size?: "sm" | "md";
   showWordmark?: boolean;
   className?: string;
 };
 
-function Mark({
-  sizePx,
-  glow,
-  shelfStroke,
-}: {
-  sizePx: number;
-  glow: boolean;
-  shelfStroke: string;
-}) {
+const PALETTE: Record<
+  Tone,
+  { shelf: string; card: string; cardBar: string; active: string; activeBar: string }
+> = {
+  onDark: {
+    shelf: "#ffffff",
+    card: "#d4d4d8",
+    cardBar: "#71717a",
+    active: "#00e676",
+    activeBar: "#052e16",
+  },
+  onLight: {
+    shelf: "#18181b",
+    card: "#71717a",
+    cardBar: "#e4e4e7",
+    active: "#00c853",
+    activeBar: "#052e16",
+  },
+};
+
+function Mark({ sizePx, tone }: { sizePx: number; tone: Tone }) {
+  const c = PALETTE[tone];
   return (
     <svg
       width={sizePx}
@@ -25,50 +40,18 @@ function Mark({
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden={true}
-      className={
-        glow
-          ? "shrink-0 drop-shadow-[0_0_10px_color-mix(in_srgb,var(--brand)_65%,transparent)]"
-          : "shrink-0"
-      }
+      className="shrink-0"
     >
-      {/* Back shelf rail */}
-      <path
-        d="M4 11.5h24"
-        stroke={shelfStroke}
-        strokeWidth="1.75"
-        strokeLinecap="round"
-      />
-      {/* Front shelf rail */}
-      <path
-        d="M3 22h26"
-        stroke={shelfStroke}
-        strokeWidth="2"
-        strokeLinecap="round"
-      />
-      {/* Side brackets */}
-      <path
-        d="M5 11.5V22M27 11.5V22"
-        stroke={shelfStroke}
-        strokeWidth="1.5"
-        strokeLinecap="round"
-        opacity="0.55"
-      />
-      {/* Inbox tray on shelf */}
-      <path
-        d="M8 14.5h16l-1.6 6.2a1.6 1.6 0 0 1-1.55 1.2H11.15a1.6 1.6 0 0 1-1.55-1.2L8 14.5Z"
-        fill="var(--brand)"
-      />
-      {/* Message fold / flap */}
-      <path
-        d="M8.4 14.8 16 19.2l7.6-4.4"
-        stroke="#000"
-        strokeWidth="1.35"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        opacity="0.35"
-      />
-      {/* Small chat notch on tray */}
-      <circle cx="16" cy="12.2" r="1.35" fill="var(--brand)" />
+      <rect x="7" y="3" width="18" height="9.5" rx="2.25" fill={c.active} />
+      <rect x="10" y="6.25" width="9.5" height="1.75" rx="0.875" fill={c.activeBar} />
+      <rect x="10" y="9" width="6" height="1.75" rx="0.875" fill={c.activeBar} opacity="0.55" />
+      <rect x="3" y="14" width="26" height="3" rx="1.5" fill={c.shelf} />
+
+      <rect x="5.5" y="19" width="9.5" height="7" rx="1.75" fill={c.card} />
+      <rect x="7.75" y="21.75" width="5" height="1.5" rx="0.75" fill={c.cardBar} />
+      <rect x="17" y="19" width="9.5" height="7" rx="1.75" fill={c.card} />
+      <rect x="19.25" y="21.75" width="5" height="1.5" rx="0.75" fill={c.cardBar} />
+      <rect x="3" y="27.5" width="26" height="3" rx="1.5" fill={c.shelf} />
     </svg>
   );
 }
@@ -80,44 +63,36 @@ export function BrandLogo({
   showWordmark = true,
   className = "",
 }: BrandLogoProps) {
-  const sizePx = size === "sm" ? 20 : 24;
-  const shelfStroke = tone === "onDark" ? "rgba(255,255,255,0.72)" : "#3f3f46";
-  const wordClass =
-    tone === "onDark"
-      ? "text-white"
-      : "text-zinc-900";
-  const wordSize = size === "sm" ? "text-sm" : "text-[15px]";
+  const sizePx = size === "sm" ? 24 : 30;
+  const wordSize = size === "sm" ? "text-[15px]" : "text-[18px]";
+  const inboxClass = tone === "onDark" ? "text-white" : "text-zinc-900";
+  const shelfClass = tone === "onDark" ? "text-brand" : "text-brand-ink";
 
   const content = (
     <>
-      <Mark sizePx={sizePx} glow={tone === "onDark"} shelfStroke={shelfStroke} />
+      <Mark sizePx={sizePx} tone={tone} />
       {showWordmark ? (
-        <span className={`${wordSize} font-semibold tracking-tight ${wordClass}`}>
-          InboxShelf
+        <span className={`${wordSize} font-bold tracking-tight`}>
+          <span className={inboxClass}>Inbox</span>
+          <span className={shelfClass}>Shelf</span>
         </span>
       ) : null}
     </>
   );
 
   const sharedClass = `inline-flex items-center gap-2.5 ${className}`;
+  const label = showWordmark ? undefined : "InboxShelf";
 
   if (href) {
     return (
-      <Link
-        href={href}
-        className={sharedClass}
-        aria-label={showWordmark ? undefined : "InboxShelf"}
-      >
+      <Link href={href} className={sharedClass} aria-label={label}>
         {content}
       </Link>
     );
   }
 
   return (
-    <span
-      className={sharedClass}
-      aria-label={showWordmark ? undefined : "InboxShelf"}
-    >
+    <span className={sharedClass} aria-label={label}>
       {content}
     </span>
   );

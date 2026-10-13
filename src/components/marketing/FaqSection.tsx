@@ -25,9 +25,14 @@ const FAQ_ITEMS = [
     a: "Confirm and delivery messages go to the phone number provided on the order — not a random DM thread — so status updates reach the right person.",
   },
   {
+    id: "whatsapp-safe",
+    q: "Will my WhatsApp number get blocked?",
+    a: "InboxShelf only replies to customers who message you first and uses Meta-approved templates — no bulk or cold blasts, so your number stays safe.",
+  },
+  {
     id: "sheets",
     q: "What gets written to Google Sheets?",
-    a: "Order id, customer name, phone, location, items, channel, price, and status (pending confirm through delivered and rated). Duplicates across channels are merged into one row.",
+    a: "Orders from Shopify and from chat land in one sheet: order id, customer name, phone, location, items, channel, price, and status (pending confirm through delivered and rated). Duplicates across channels are merged into one row.",
   },
   {
     id: "delivery",
@@ -45,9 +50,14 @@ const FAQ_ITEMS = [
     a: "Connect Gmail and Outlook to surface important mail. The Assistant is a private owner↔bot chat for ops (e.g. list today’s important emails) — it does not message your customers in MVP.",
   },
   {
+    id: "multi-store",
+    q: "I run more than one store — how does pricing work?",
+    a: "Each store has its own subscription. Use the same login and switch between stores. The 14-day free trial is for your first store; each extra store is Pro at $10/mo.",
+  },
+  {
     id: "pricing",
     q: "How much does it cost?",
-    a: "Starter is a free 14-day trial of the full product. After that, Pro is $10/mo — the Most Popular paid plan.",
+    a: "Starter is a free 14-day trial of the full product. No card at signup. After that, Pro is $10/mo — the Most Popular paid plan.",
   },
 ] as const;
 
@@ -57,7 +67,7 @@ export function FaqSection() {
   return (
     <section
       id="faq"
-      className="scroll-mt-28 border-t border-zinc-100 bg-zinc-50 px-5 py-16 sm:px-8 sm:py-24"
+      className="section-y scroll-mt-28 bg-zinc-50 px-5 sm:px-8"
     >
       <div className="mx-auto max-w-2xl">
         <h2 className="text-center text-3xl font-semibold tracking-tight sm:text-4xl">

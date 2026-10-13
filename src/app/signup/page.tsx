@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { Metadata } from "next";
 import { AuthShell } from "@/components/marketing/AuthShell";
+import { AuthDivider, GoogleButton } from "@/components/marketing/GoogleButton";
 
 export const metadata: Metadata = { title: "Sign up" };
 
@@ -15,7 +16,7 @@ export default function SignupPage() {
           Start free trial
         </h1>
         <p className="mt-3 text-[15px] leading-relaxed text-zinc-500">
-          14 days free · stub auth for MVP. No card required.
+          14 days free · no card required.
         </p>
 
         <form className="mt-8 space-y-4" action="/">
@@ -55,17 +56,20 @@ export default function SignupPage() {
           </label>
           <button
             type="submit"
-            className="mt-2 w-full rounded-lg bg-brand py-3 text-[14px] font-semibold text-black transition-colors hover:bg-brand-dim"
+            className="btn-primary mt-2 w-full py-3 text-[14px]"
           >
             Create account
           </button>
         </form>
 
+        <AuthDivider />
+        <GoogleButton label="Sign up with Google" />
+
         <p className="mt-6 text-center text-[13px] text-zinc-500">
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-medium text-brand transition-colors hover:text-brand-dim"
+            className="btn-link text-brand hover:text-brand-dim"
           >
             Log in
           </Link>
