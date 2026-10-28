@@ -51,18 +51,6 @@ const INTEGRATIONS: Integration[] = [
     ),
   },
   {
-    name: "Website chat",
-    nameClass: "text-zinc-300",
-    mark: () => (
-      <svg viewBox="0 0 24 24" className="size-6" aria-hidden>
-        <path
-          fill="#E4E4E7"
-          d="M4 4h16a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H9l-4.2 3.15A.75.75 0 0 1 3.5 19.5V17H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm3.25 5.5a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zm4.75 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5zm4.75 0a1.25 1.25 0 1 0 0 2.5 1.25 1.25 0 0 0 0-2.5z"
-        />
-      </svg>
-    ),
-  },
-  {
     name: "Shopify",
     nameClass: "text-[#95BF47]",
     mark: () => (
@@ -126,7 +114,6 @@ const LIGHT_NAME: Record<string, string> = {
   WhatsApp: "text-[#25D366]",
   Instagram: "text-zinc-900",
   Messenger: "text-[#0084FF]",
-  "Website chat": "text-zinc-800",
   Shopify: "text-[#95BF47]",
   "Google Sheets": "text-[#0F9D58]",
   Gmail: "text-zinc-600",
@@ -208,8 +195,8 @@ export function IntegrationsStrip({
       </div>
 
       <p className="sr-only">
-        Connects to WhatsApp, Instagram, Messenger, Website chat, Shopify, Google
-        Sheets, Gmail, and Outlook.
+        Connects to WhatsApp, Instagram, Messenger, Shopify, Google Sheets, Gmail,
+        and Outlook.
       </p>
 
       <div

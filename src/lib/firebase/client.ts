@@ -28,11 +28,17 @@ function getFirebaseApp(): FirebaseApp {
   return initializeApp(firebaseConfig);
 }
 
-const app = getFirebaseApp();
+export function getClientAuth(): Auth {
+  return getAuth(getFirebaseApp());
+}
 
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-export const storage: FirebaseStorage = getStorage(app);
+export function getClientDb(): Firestore {
+  return getFirestore(getFirebaseApp());
+}
+
+export function getClientStorage(): FirebaseStorage {
+  return getStorage(getFirebaseApp());
+}
 
 let analytics: Analytics | null = null;
 
@@ -43,10 +49,8 @@ export function getClientAnalytics(): Analytics | null {
   }
 
   if (!analytics) {
-    analytics = getAnalytics(app);
+    analytics = getAnalytics(getFirebaseApp());
   }
 
   return analytics;
 }
-
-export { app };

@@ -7,7 +7,7 @@ const FAQ_ITEMS = [
   {
     id: "channels",
     q: "Which channels does InboxShelf support?",
-    a: "WhatsApp Business, Instagram DM, Messenger, and a website chat widget. TikTok and native apps are planned for later Pro modules.",
+    a: "WhatsApp Business, Instagram DM, and Messenger. TikTok and native apps are planned for later Pro modules.",
   },
   {
     id: "knowledge",

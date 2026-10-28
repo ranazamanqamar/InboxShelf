@@ -10,7 +10,7 @@ export const WORKFLOW_SCENES = [
     live: "Step 1: Customer asks about a product. AI replies from knowledge.",
   },
   {
-    header: "Unified inbox · Website chat",
+    header: "Unified inbox · WhatsApp",
     outcome: "When they want to buy, AI sends your site order link.",
     live: "Step 2: Customer ready to order. AI sends order link and asks for delivery area.",
   },

@@ -24,7 +24,7 @@ export function Hero() {
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-[17px] leading-relaxed text-slate-300">
             Stop drowning in scattered messages. Unify WhatsApp, Instagram,
-            Messenger, and website chats into one AI inbox that answers customer
+            and Messenger into one AI inbox that answers customer
             questions, sends order links, and auto-syncs orders into Google Sheets.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">

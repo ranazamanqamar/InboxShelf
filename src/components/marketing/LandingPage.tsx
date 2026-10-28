@@ -634,7 +634,7 @@ export function LandingPage() {
                 <p className="mt-1 text-sm text-zinc-500">14-day trial · no card needed</p>
                 <ul className="mt-6 flex-1 space-y-2.5 text-sm text-zinc-300">
                   {[
-                    "WhatsApp, Instagram, Messenger, website chat",
+                    "WhatsApp, Instagram, Messenger",
                     "AI replies from your FAQs and PDFs only",
                     "Product Q&A → site order link",
                     "WhatsApp order confirm on the order phone",

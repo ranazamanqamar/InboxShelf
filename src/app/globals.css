@@ -96,6 +96,37 @@ body {
   }
 }
 
+@utility btn-quiet {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid rgb(255 255 255 / 0.1);
+  background-color: transparent;
+  color: #f4f4f5;
+  font-family: var(--font-cta), var(--font-jakarta), system-ui, sans-serif;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  transition:
+    background-color 150ms ease,
+    border-color 150ms ease;
+
+  &:hover {
+    background-color: rgb(255 255 255 / 0.05);
+    border-color: rgb(255 255 255 / 0.2);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--brand);
+    outline-offset: 3px;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+  }
+}
+
 @utility btn-link {
   display: inline-flex;
   align-items: center;

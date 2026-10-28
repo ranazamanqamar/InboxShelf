@@ -1,12 +1,9 @@
 import Link from "next/link";
 import type { Metadata } from "next";
+import { SignupForm } from "@/components/auth/AuthForms";
 import { AuthShell } from "@/components/marketing/AuthShell";
-import { AuthDivider, GoogleButton } from "@/components/marketing/GoogleButton";
 
 export const metadata: Metadata = { title: "Sign up" };
-
-const fieldClass =
-  "mt-1.5 w-full rounded-lg border border-white/15 bg-black/40 px-4 py-3 text-[15px] text-white outline-none transition-colors placeholder:text-zinc-600 focus:border-brand";
 
 export default function SignupPage() {
   return (
@@ -19,51 +16,7 @@ export default function SignupPage() {
           14 days free · no card required.
         </p>
 
-        <form className="mt-8 space-y-4" action="/">
-          <label className="block">
-            <span className="text-[13px] font-medium text-zinc-400">
-              Store name
-            </span>
-            <input
-              type="text"
-              name="store"
-              defaultValue="North & Co."
-              className={fieldClass}
-              autoComplete="organization"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[13px] font-medium text-zinc-400">Email</span>
-            <input
-              type="email"
-              name="email"
-              defaultValue="owner@demo.inboxshelf.com"
-              className={fieldClass}
-              autoComplete="email"
-            />
-          </label>
-          <label className="block">
-            <span className="text-[13px] font-medium text-zinc-400">
-              Password
-            </span>
-            <input
-              type="password"
-              name="password"
-              defaultValue="demo"
-              className={fieldClass}
-              autoComplete="new-password"
-            />
-          </label>
-          <button
-            type="submit"
-            className="btn-primary mt-2 w-full py-3 text-[14px]"
-          >
-            Create account
-          </button>
-        </form>
-
-        <AuthDivider />
-        <GoogleButton label="Sign up with Google" />
+        <SignupForm />
 
         <p className="mt-6 text-center text-[13px] text-zinc-500">
           Already have an account?{" "}

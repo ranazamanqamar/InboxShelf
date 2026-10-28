@@ -1,5 +1,7 @@
 type GoogleButtonProps = {
   label: string;
+  onClick?: () => void;
+  disabled?: boolean;
 };
 
 export function AuthDivider() {
@@ -12,12 +14,13 @@ export function AuthDivider() {
   );
 }
 
-export function GoogleButton({ label }: GoogleButtonProps) {
+export function GoogleButton({ label, onClick, disabled }: GoogleButtonProps) {
   return (
     <button
       type="button"
-      title="Google sign-in coming soon"
-      className="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-white py-3 font-[family-name:var(--font-cta)] text-[14px] font-semibold tracking-[-0.01em] text-zinc-900 transition-colors hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-brand"
+      onClick={onClick}
+      disabled={disabled}
+      className="inline-flex w-full items-center justify-center gap-2.5 rounded-xl bg-white py-3 font-[family-name:var(--font-cta)] text-[14px] font-semibold tracking-[-0.01em] text-zinc-900 transition-colors hover:bg-zinc-200 focus-visible:outline-2 focus-visible:outline-offset-[3px] focus-visible:outline-brand disabled:opacity-60"
     >
       <svg viewBox="0 0 48 48" width="18" height="18" aria-hidden>
         <path

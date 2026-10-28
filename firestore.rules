@@ -1,0 +1,30 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function owns(tenantId) {
+      return signedIn()
+        && get(/databases/$(database)/documents/tenants/$(tenantId)).data.ownerUid == request.auth.uid;
+    }
+
+    match /users/{uid} {
+      allow read, write: if signedIn() && request.auth.uid == uid;
+    }
+
+    match /tenants/{tenantId} {
+      allow create: if signedIn() && request.resource.data.ownerUid == request.auth.uid;
+      allow read, update, delete: if owns(tenantId);
+
+      match /{document=**} {
+        allow read, write: if owns(tenantId);
+      }
+    }
+
+    match /tenantSecrets/{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
