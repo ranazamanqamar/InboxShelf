@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { BrandLogo } from "@/components/marketing/BrandLogo";
 import {
+  clearGoogleRedirectMarkers,
   logOut,
   watchAuth,
   watchProfile,
@@ -27,6 +28,7 @@ import {
 } from "@/lib/dashboard/data";
 import { isStoreLocked, trialDaysLeft } from "@/lib/dashboard/format";
 import type { OwnerProfile, Tenant } from "@/lib/dashboard/types";
+import { getClientAuth } from "@/lib/firebase/client";
 import { DashboardContext } from "./dashboard-context";
 
 const NAV = [
@@ -54,12 +56,23 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
-    return watchAuth((user) => {
-      setUid(user?.uid ?? null);
-      setEmail(user?.email ?? null);
-      setReady(true);
-      if (!user) setProfile(null);
-    });
+    let stop = () => {};
+    let cancelled = false;
+    void getClientAuth()
+      .authStateReady()
+      .then(() => {
+        if (cancelled) return;
+        stop = watchAuth((user) => {
+          setUid(user?.uid ?? null);
+          setEmail(user?.email ?? null);
+          setReady(true);
+          if (!user) setProfile(null);
+        });
+      });
+    return () => {
+      cancelled = true;
+      stop();
+    };
   }, []);
 
   useEffect(() => {
@@ -98,8 +111,14 @@ export function DashboardShell({ children }: { children: ReactNode }) {
   }, [profile?.activeTenantId]);
 
   useEffect(() => {
+    // Only bounce after auth has settled — avoids null→user flicker kicking to /login.
     if (ready && !uid) router.replace("/login");
   }, [ready, uid, router]);
+
+  useEffect(() => {
+    // Drop Strict Mode redirect markers once a session is confirmed on the shelf.
+    if (ready && uid) clearGoogleRedirectMarkers();
+  }, [ready, uid]);
 
   const locked = tenant ? isStoreLocked(tenant) : false;
   const days = tenant ? trialDaysLeft(tenant.trialEndsAt) : null;

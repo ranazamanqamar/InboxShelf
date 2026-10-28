@@ -46,6 +46,8 @@ export function googleAuthUrl(input: {
   origin: string;
   provider: "gmail" | "google_sheets";
   state: string;
+  loginHint?: string;
+  forceAccountPicker?: boolean;
 }): string {
   const baseScope =
     input.provider === "gmail"
@@ -53,15 +55,19 @@ export function googleAuthUrl(input: {
       : "https://www.googleapis.com/auth/spreadsheets";
   // userinfo.email so Connect can store and show which Google account was chosen
   const scope = `${baseScope} https://www.googleapis.com/auth/userinfo.email openid`;
+  const loginHint = input.loginHint?.trim();
+  const forcePicker = Boolean(input.forceAccountPicker) || !loginHint;
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_CLIENT_ID ?? "",
     redirect_uri: `${input.origin}/api/integrations/google/callback`,
     response_type: "code",
     scope,
     access_type: "offline",
-    prompt: "consent",
+    // First connect: account picker. Reconnect: reuse linked email via login_hint.
+    prompt: forcePicker ? "select_account consent" : "consent",
     state: input.state,
   });
+  if (loginHint) params.set("login_hint", loginHint);
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
 }
 

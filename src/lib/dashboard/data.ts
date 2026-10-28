@@ -5,7 +5,6 @@ import {
   onAuthStateChanged,
   signInWithEmailAndPassword,
   signInWithPopup,
-  signInWithRedirect,
   signOut,
   updateProfile,
   type User,
@@ -112,6 +111,11 @@ export async function signInWithEmail(email: string, password: string): Promise<
 
 const GOOGLE_STORE_KEY = "inboxshelf.googleStoreName";
 const GOOGLE_REDIRECT_KEY = "inboxshelf.googleRedirect";
+/** Survives Strict Mode remount after GOOGLE_REDIRECT_KEY is cleared. */
+const GOOGLE_REDIRECT_DONE_KEY = "inboxshelf.googleRedirectDone";
+
+/** In-memory twin of DONE — survives React remounts in the same JS context. */
+let googleRedirectJustCompleted = false;
 
 async function finishGoogleUser(user: User, storeName?: string): Promise<void> {
   const existing = await readProfile(user.uid);
@@ -123,12 +127,6 @@ async function finishGoogleUser(user: User, storeName?: string): Promise<void> {
       lastLoginAt: serverTimestamp(),
     });
   }
-}
-
-function authErrorCode(error: unknown): string {
-  return typeof error === "object" && error && "code" in error
-    ? String((error as { code: string }).code)
-    : "";
 }
 
 function rememberGoogleStoreName(storeName?: string) {
@@ -146,53 +144,66 @@ function takeGoogleStoreName(): string | undefined {
   return value;
 }
 
-/**
- * Try a popup first (Chrome/Edge). If the popup is blocked or hangs (Cursor),
- * fall back to a full-page redirect.
- */
-export async function signInWithGoogle(
-  storeName?: string,
-): Promise<"signed-in" | "redirecting"> {
-  const trimmed = rememberGoogleStoreName(storeName);
-  const auth = getClientAuth();
-  const provider = new GoogleAuthProvider();
-
-  try {
-    const credential = await Promise.race([
-      signInWithPopup(auth, provider),
-      new Promise<never>((_, reject) => {
-        window.setTimeout(() => {
-          reject(
-            Object.assign(new Error("Google popup did not finish."), {
-              code: "auth/popup-blocked",
-            }),
-          );
-        }, 2000);
-      }),
-    ]);
-    await finishGoogleUser(credential.user, trimmed);
-    takeGoogleStoreName();
-    return "signed-in";
-  } catch (error) {
-    const code = authErrorCode(error);
-    if (
-      code === "auth/popup-blocked" ||
-      code === "auth/popup-closed-by-user" ||
-      code === "auth/cancelled-popup-request"
-    ) {
-      if (typeof window !== "undefined") {
-        window.sessionStorage.setItem(GOOGLE_REDIRECT_KEY, "1");
-      }
-      await signInWithRedirect(auth, provider);
-      return "redirecting";
-    }
-    throw error;
+function markGoogleRedirectDone() {
+  googleRedirectJustCompleted = true;
+  if (typeof window !== "undefined") {
+    window.sessionStorage.setItem(GOOGLE_REDIRECT_DONE_KEY, "1");
   }
 }
 
+/** Call once the user has landed on the dashboard (or a fresh Google attempt starts). */
+export function clearGoogleRedirectMarkers() {
+  googleRedirectJustCompleted = false;
+  if (typeof window === "undefined") return;
+  window.sessionStorage.removeItem(GOOGLE_REDIRECT_DONE_KEY);
+}
+
+function hadGoogleRedirectInProgress(): boolean {
+  if (googleRedirectJustCompleted) return true;
+  if (typeof window === "undefined") return false;
+  return (
+    window.sessionStorage.getItem(GOOGLE_REDIRECT_KEY) === "1" ||
+    window.sessionStorage.getItem(GOOGLE_REDIRECT_DONE_KEY) === "1"
+  );
+}
+
+function googleProvider(mode: "login" | "signup") {
+  const provider = new GoogleAuthProvider();
+  if (mode === "signup") {
+    provider.setCustomParameters({ prompt: "select_account" });
+  }
+  return provider;
+}
+
 /**
- * Finish auth only when returning from a Google redirect.
- * Ambient sessions are handled by the login/signup page boot logic.
+ * Google sign-in via popup. Redirect is unreliable on localhost (getRedirectResult
+ * returns null / no session), which bounced users back to login/signup.
+ * Signup forces the account picker; login reuses the last Google account.
+ */
+export async function signInWithGoogle(
+  storeNameOrOptions?: string | { storeName?: string; mode?: "login" | "signup" },
+  maybeMode?: "login" | "signup",
+): Promise<"signed-in" | "redirecting"> {
+  const options =
+    typeof storeNameOrOptions === "object" && storeNameOrOptions !== null
+      ? storeNameOrOptions
+      : { storeName: storeNameOrOptions, mode: maybeMode };
+  const mode = options.mode ?? (options.storeName ? "signup" : "login");
+  rememberGoogleStoreName(options.storeName);
+  clearGoogleRedirectMarkers();
+
+  const auth = getClientAuth();
+  const provider = googleProvider(mode);
+  const credential = await signInWithPopup(auth, provider);
+  takeGoogleStoreName();
+  await finishGoogleUser(credential.user, options.storeName);
+  return "signed-in";
+}
+
+/**
+ * Finish auth when returning from a Google redirect.
+ * Always calls getRedirectResult (once per return). Ambient sessions are
+ * handled by resolveAuthPageBoot.
  */
 export async function completeGoogleRedirect(): Promise<boolean> {
   const auth = getClientAuth();
@@ -202,44 +213,77 @@ export async function completeGoogleRedirect(): Promise<boolean> {
     typeof window !== "undefined" &&
     window.sessionStorage.getItem(GOOGLE_REDIRECT_KEY) === "1";
 
-  if (!expectingRedirect) return false;
-
-  let user: User | null = null;
-  try {
-    const result = await Promise.race([
-      getRedirectResult(auth),
-      new Promise<null>((resolve) => window.setTimeout(() => resolve(null), 6000)),
-    ]);
-    user = result?.user ?? null;
-  } catch {
-    user = null;
+  // Already finished this page load (Strict Mode remount) — keep markers for boot.
+  if (googleRedirectJustCompleted && auth.currentUser) {
+    return true;
   }
-  if (typeof window !== "undefined") {
+
+  let redirectUser: User | null = null;
+  try {
+    const result = await getRedirectResult(auth);
+    redirectUser = result?.user ?? null;
+  } catch (error) {
+    if (typeof window !== "undefined" && expectingRedirect) {
+      window.sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);
+    }
+    throw error;
+  }
+
+  // Success: redirect result user, or flag was set and session already restored.
+  const user = redirectUser ?? (expectingRedirect ? auth.currentUser : null);
+
+  if (typeof window !== "undefined" && expectingRedirect) {
     window.sessionStorage.removeItem(GOOGLE_REDIRECT_KEY);
   }
 
-  // After redirect, getRedirectResult can be null while currentUser is already set.
-  user = user ?? auth.currentUser;
-  if (!user) return false;
+  if (!user) {
+    // Redirect returned to the app but Firebase never established a session
+    // (common on localhost without a same-origin auth handler proxy).
+    if (expectingRedirect) {
+      takeGoogleStoreName();
+      throw new Error(
+        "Google sign-in did not finish after redirect. Allow popups for this site and try again, or use email instead.",
+      );
+    }
+    return false;
+  }
+
+  // Set DONE before finishing so a Strict Mode remount never treats this as ambient.
+  markGoogleRedirectDone();
 
   const storeName = takeGoogleStoreName();
   await finishGoogleUser(user, storeName);
   return true;
 }
 
-/** Login reuses a session; signup clears it so new credentials can be collected. */
+/**
+ * Login reuses a session. Signup clears an ambient session so new credentials
+ * can be collected — but never signs out a just-completed Google redirect.
+ */
 export async function resolveAuthPageBoot(
   mode: "login" | "signup",
 ): Promise<"go-dashboard" | "show-form"> {
+  const wasGoogleRedirect = hadGoogleRedirectInProgress();
+
   if (await completeGoogleRedirect()) return "go-dashboard";
 
   const auth = getClientAuth();
   await auth.authStateReady();
   const user = auth.currentUser;
 
-  if (mode === "login" && user) return "go-dashboard";
-  if (mode === "signup" && user) await signOut(auth);
+  if (!user) return "show-form";
 
+  if (mode === "login") return "go-dashboard";
+
+  // Signup after Google redirect (including Strict Mode remount where the
+  // redirect key was already cleared) — never sign out.
+  if (wasGoogleRedirect || hadGoogleRedirectInProgress()) {
+    await finishGoogleUser(user, takeGoogleStoreName());
+    return "go-dashboard";
+  }
+
+  // Ambient session: opened /signup while already logged in.
+  await signOut(auth);
   return "show-form";
 }
 

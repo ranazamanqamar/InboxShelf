@@ -150,9 +150,9 @@ export function firebaseErrorMessage(error: unknown): string {
     case "auth/invalid-email":
       return "Enter a valid email.";
     case "auth/popup-blocked":
-      return "Google sign-in was blocked. Allow popups, or try again (we will use a full-page login).";
+      return "Google sign-in was blocked. Allow popups for localhost:3000 and try again.";
     case "auth/popup-closed-by-user":
-      return "Google sign-in was closed before it finished.";
+      return "Google sign-in was closed before it finished. Try again and keep the Google window open.";
     case "auth/operation-not-allowed":
       return "This sign-in method is turned off in Firebase Authentication.";
     case "auth/unauthorized-domain":

@@ -25,9 +25,14 @@ function useAuthPageBoot(
     let cancelled = false;
     resolveAuthPageBoot(mode)
       .then((result) => {
+        // Always navigate on success — Strict Mode aborts mount 1 but the
+        // redirect already completed; skipping replace left users on the form.
+        if (result === "go-dashboard") {
+          router.replace("/dashboard");
+          return;
+        }
         if (cancelled) return;
-        if (result === "go-dashboard") router.replace("/dashboard");
-        else setPending(false);
+        setPending(false);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -79,7 +84,7 @@ export function LoginForm() {
     setFormError(null);
     clearRedirectError();
     try {
-      const result = await signInWithGoogle();
+      const result = await signInWithGoogle({ mode: "login" });
       if (result === "signed-in") router.push("/dashboard");
     } catch (err) {
       setFormError(firebaseErrorMessage(err));
@@ -164,7 +169,7 @@ export function SignupForm() {
     setFormError(null);
     clearRedirectError();
     try {
-      const result = await signInWithGoogle(storeName);
+      const result = await signInWithGoogle({ storeName, mode: "signup" });
       if (result === "signed-in") router.push("/dashboard");
     } catch (err) {
       setFormError(firebaseErrorMessage(err));

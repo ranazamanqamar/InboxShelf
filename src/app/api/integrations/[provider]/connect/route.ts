@@ -40,7 +40,10 @@ export async function POST(
     );
   }
 
-  const body = (await request.json().catch(() => ({}))) as { shop?: string };
+  const body = (await request.json().catch(() => ({}))) as {
+    shop?: string;
+    loginHint?: string;
+  };
   const origin = new URL(request.url).origin;
   const state = signState({
     tenantId,
@@ -71,11 +74,14 @@ export async function POST(
   if (GOOGLE.has(provider)) {
     const missing = requiredEnv(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"]);
     if (missing) return jsonError(503, "MISSING_CREDENTIALS", missing);
+    const loginHint = body.loginHint?.trim();
     return jsonOk({
       url: googleAuthUrl({
         origin,
         provider: provider as "gmail" | "google_sheets",
         state,
+        loginHint,
+        forceAccountPicker: !loginHint,
       }),
     });
   }

@@ -91,9 +91,14 @@ export function IntegrationsPage() {
       if (provider === "shopify" && !shop.trim()) {
         throw new Error("Enter your shop domain, like north-co.myshopify.com.");
       }
+      const linked =
+        (provider === "gmail" || provider === "google_sheets") &&
+        byId.get(provider)?.displayName?.includes("@")
+          ? byId.get(provider)?.displayName
+          : undefined;
       const response = await authedFetch(`/api/integrations/${provider}/connect`, tenant.id, {
         method: "POST",
-        body: JSON.stringify({ shop }),
+        body: JSON.stringify({ shop, loginHint: linked }),
       });
       const body = (await response.json()) as {
         url?: string;
